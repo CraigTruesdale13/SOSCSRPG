@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Engine.Models;
 
@@ -8,6 +7,7 @@ namespace Engine.Factories
     public static class ItemFactory
     {
         private static List<GameItem> _standardGameItems;
+
         static ItemFactory()
         {
             _standardGameItems = new List<GameItem>();
@@ -28,6 +28,10 @@ namespace Engine.Factories
 
             if(standardItem != null)
             {
+                if (standardItem is Weapon)
+                {
+                    return (standardItem as Weapon).Clone();
+                }
                 return standardItem.Clone();
             }
             return null;
