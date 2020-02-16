@@ -15,13 +15,17 @@ namespace Engine.ViewModels
         private Location _currentLocation;
         private Monster _currentMonster;
         private Trader _currentTrader;
+
         public World CurrentWorld { get; set; }
         public Player CurrentPlayer { get; set; }
+
         public Location CurrentLocation
-        { get { return _currentLocation; }
+        { 
+            get { return _currentLocation; }
             set
             {
                 _currentLocation = value;
+
                 OnPropertyChanged(nameof (CurrentLocation));
                 OnPropertyChanged(nameof (HasLocationToNorth));
                 OnPropertyChanged(nameof (HasLocationToWest));
@@ -35,6 +39,7 @@ namespace Engine.ViewModels
                 CurrentTrader = CurrentLocation.TraderHere;
             }
         }
+
         public Monster CurrentMonster
         {
             get { return _currentMonster; }
@@ -66,6 +71,7 @@ namespace Engine.ViewModels
         }
 
         public Weapon CurrentWeapon { get; set; }
+
         public bool HasLocationToNorth =>
             CurrentWorld.LocationAt(CurrentLocation.XCoordinate, CurrentLocation.YCoordinate + 1) != null;
 
@@ -86,16 +92,22 @@ namespace Engine.ViewModels
 
         public GameSession()
         {
-            CurrentPlayer = new Player 
+            CurrentPlayer = new Player
                             {
-                                Name = "Craig", 
+                                Name = "Craig",
                                 CharacterClass = "Figther",
-                                HitPoints = 10,
+                                CurrentHitPoints = 10,
+                                MaximumHitPoints = 10,
                                 Gold = 5,
                                 ExperiencePoints = 0,
                                 Level = 1
                             };
 
+          /*if (!CurrentPlayer.Weapons.Any())
+            {
+                CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(1001));
+            }
+            */
             CurrentWorld = WorldFactory.CreateWorld();
 
             CurrentLocation = CurrentWorld.LocationAt(0, 0);
@@ -108,6 +120,7 @@ namespace Engine.ViewModels
                 CurrentLocation = CurrentWorld.LocationAt(CurrentLocation.XCoordinate, CurrentLocation.YCoordinate + 1);
             }
         }
+
         public void MoveWest()
         {
             if(HasLocationToWest)
@@ -139,6 +152,7 @@ namespace Engine.ViewModels
                 QuestStatus questToComplete =
                     CurrentPlayer.Quests.FirstOrDefault(q => q.PlayerQuest.ID == quest.ID &&
                                                             !q.IsCompleted);
+
                 if(questToComplete != null)
                 {
                     if(CurrentPlayer.HasAllTheseItems(quest.ItemsToComplete))
@@ -176,6 +190,7 @@ namespace Engine.ViewModels
                 }
             }
         }
+
         private void GivePlayerQuestsAtLocation()
         {
             foreach(Quest quest in CurrentLocation.QuestsAvailableHere)
@@ -183,6 +198,7 @@ namespace Engine.ViewModels
                 if(!CurrentPlayer.Quests.Any(q => q.PlayerQuest.ID == quest.ID))
                 {
                     CurrentPlayer.Quests.Add(new QuestStatus(quest));
+
                     RaiseMessage("");
                     RaiseMessage($"You receive the '{quest.Name}' quest");
                     RaiseMessage(quest.Description);
@@ -225,12 +241,12 @@ namespace Engine.ViewModels
             }
             else
             {
-                CurrentMonster.HitPoints -= damageToMonster;
+                CurrentMonster.CurrentHitPoints -= damageToMonster;
                 RaiseMessage($"You hit the {CurrentMonster.Name} for {damageToMonster} points.");
             }
 
             //If monster killed, collect reward and loot
-            if(CurrentMonster.HitPoints <=0)
+            if(CurrentMonster.CurrentHitPoints <=0)
             {
                 RaiseMessage("");
                 RaiseMessage($"You defeated the {CurrentMonster.Name}!");
@@ -238,14 +254,13 @@ namespace Engine.ViewModels
                 CurrentPlayer.ExperiencePoints += CurrentMonster.RewardExperiencePoints;
                 RaiseMessage($"You receive {CurrentMonster.RewardExperiencePoints} experience points.");
 
-                CurrentPlayer.Gold += CurrentMonster.RewardGold;
-                RaiseMessage($"You receive {CurrentMonster.RewardGold} gold.");
+                CurrentPlayer.Gold += CurrentMonster.Gold;
+                RaiseMessage($"You receive {CurrentMonster.Gold} gold.");
 
-                foreach(ItemQuantity itemQuantity in CurrentMonster.Inventory)
+                foreach(GameItem gameItem in CurrentMonster.Inventory)
                 {
-                    GameItem item = ItemFactory.CreateGameItem(itemQuantity.ItemID);
-                    CurrentPlayer.AddItemToInventory(item);
-                    RaiseMessage($"You receive {itemQuantity.Quantity} {item.Name}.");
+                    CurrentPlayer.AddItemToInventory(gameItem);
+                    RaiseMessage($"You receive one {gameItem.Name}.");
                 }
 
                 // Get another monster to fight
@@ -262,17 +277,17 @@ namespace Engine.ViewModels
                 }
                 else
                 {
-                    CurrentPlayer.HitPoints -= damageToPlayer;
+                    CurrentPlayer.CurrentHitPoints -= damageToPlayer;
                     RaiseMessage($"The {CurrentMonster.Name} hit you for {damageToPlayer} points.");
                 }
 
-                if (CurrentPlayer.HitPoints <= 0)
+                if (CurrentPlayer.CurrentHitPoints <= 0)
                 {
                     RaiseMessage("");
                     RaiseMessage($"The {CurrentMonster.Name} killed you.");
 
                     CurrentLocation = CurrentWorld.LocationAt(0, -1); //player home
-                    CurrentPlayer.HitPoints = CurrentPlayer.Level * 10; // Completely heal the player
+                    CurrentPlayer.CurrentHitPoints = CurrentPlayer.Level * 10; // Completely heal the player
                 }
             }
         }
