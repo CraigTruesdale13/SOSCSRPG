@@ -38,6 +38,8 @@ namespace Engine.Models
             HitPoints = hitPoints;
             RewardExperiencePoints = rewardExperiencePoints;
             RewardGold = rewardGold;
+
+            Inventory = new ObservableCollection<ItemQuantity>();
         }
     }
 }
