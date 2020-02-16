@@ -31,6 +31,8 @@ namespace Engine.ViewModels
                 CompleteQuestAtLocation();
                 GivePlayerQuestsAtLocation();
                 GetMonsterAtLocation();
+
+                CurrentTrader = CurrentLocation.TraderHere;
             }
         }
         public Monster CurrentMonster
@@ -89,14 +91,10 @@ namespace Engine.ViewModels
                                 Name = "Craig", 
                                 CharacterClass = "Figther",
                                 HitPoints = 10,
-                                Gold = 1000000,
+                                Gold = 5,
                                 ExperiencePoints = 0,
                                 Level = 1
                             };
-            if (!CurrentPlayer.Weapons.Any())
-            {
-                CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(1001));
-            }
 
             CurrentWorld = WorldFactory.CreateWorld();
 
