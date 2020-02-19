@@ -122,10 +122,10 @@ namespace Engine.ViewModels
         {
             CurrentPlayer = new Player("Craig", "Fighter", 0, 10, 10, 5);
 
-          /*if (!CurrentPlayer.Weapons.Any())
+            if (!CurrentPlayer.Weapons.Any())
             {
                 CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(1001));
-            }*/
+            }
 
             CurrentWorld = WorldFactory.CreateWorld();
 

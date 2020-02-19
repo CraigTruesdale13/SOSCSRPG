@@ -25,7 +25,7 @@ namespace Engine.Models
             Name = name;
             Price = price;
             IsUnique = isUnique;
-            Action = Action;
+            Action = action;
         }
 
         public void PerformAction(LivingEntity actor, LivingEntity target)
