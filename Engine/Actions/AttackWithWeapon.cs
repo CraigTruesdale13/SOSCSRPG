@@ -3,7 +3,7 @@ using Engine.Models;
 
 namespace Engine.Actions
 {
-    public class AttackWithWeapon
+    public class AttackWithWeapon : IAction
     {
         private readonly GameItem _weapon;
         private readonly int _maximumDamage;
@@ -18,7 +18,7 @@ namespace Engine.Actions
                 throw new ArgumentException($"{weapon.Name} is not a weapon");
             }
 
-            if(_minimumDamage <0)
+            if(_minimumDamage < 0)
             {
                 throw new ArgumentException("minimumDamage must be 0 or larger");
             }
