@@ -55,7 +55,7 @@ namespace Engine.ViewModels
                 OnPropertyChanged(nameof (HasLocationToEast));
                 OnPropertyChanged(nameof (HasLocationToSouth));
 
-                CompleteQuestAtLocation();
+                CompleteQuestsAtLocation();
                 GivePlayerQuestsAtLocation();
                 GetMonsterAtLocation();
 
@@ -131,6 +131,9 @@ namespace Engine.ViewModels
 
             CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(2001));
             CurrentPlayer.LearnRecipe(RecipeFactory.RecipeByID(1));
+            CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(3001));
+            CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(3002));
+            CurrentPlayer.AddItemToInventory(ItemFactory.CreateGameItem(3003));
 
             CurrentWorld = WorldFactory.CreateWorld();
 
@@ -169,46 +172,39 @@ namespace Engine.ViewModels
             }
         }
 
-        private void CompleteQuestAtLocation()
+        private void CompleteQuestsAtLocation()
         {
-            foreach(Quest quest in CurrentLocation.QuestsAvailableHere)
+            foreach (Quest quest in CurrentLocation.QuestsAvailableHere)
             {
                 QuestStatus questToComplete =
                     CurrentPlayer.Quests.FirstOrDefault(q => q.PlayerQuest.ID == quest.ID &&
-                                                            !q.IsCompleted);
+                                                             !q.IsCompleted);
 
-                if(questToComplete != null)
+                if (questToComplete != null)
                 {
-                    if(CurrentPlayer.HasAllTheseItems(quest.ItemsToComplete))
+                    if (CurrentPlayer.HasAllTheseItems(quest.ItemsToComplete))
                     {
-                        //Remove the quest completion items from player inventory
-                        foreach (ItemQuantity itemQuantity in quest.ItemsToComplete)
-                        {
-                            for(int i = 0; i < itemQuantity.Quantity; i++)
-                            {
-                                CurrentPlayer.RemoveItemFromInventory(CurrentPlayer.Inventory.First(item => item.ItemTypeID == itemQuantity.ItemID));
-                            }
-                        }
+                        CurrentPlayer.RemoveItemsFromInventory(quest.ItemsToComplete);
 
                         RaiseMessage("");
                         RaiseMessage($"You completed the '{quest.Name}' quest");
 
-                        //Give the player the quest rewards
-                        CurrentPlayer.AddExperience(quest.RewardExperiencePoints);
+                        // Give the player the quest rewards
                         RaiseMessage($"You receive {quest.RewardExperiencePoints} experience points");
+                        CurrentPlayer.AddExperience(quest.RewardExperiencePoints);
 
-                        CurrentPlayer.ReceiveGold(quest.RewardGold);
                         RaiseMessage($"You receive {quest.RewardGold} gold");
+                        CurrentPlayer.ReceiveGold(quest.RewardGold);
 
-                        foreach(ItemQuantity itemQuantity in quest.RewardItems)
+                        foreach (ItemQuantity itemQuantity in quest.RewardItems)
                         {
                             GameItem rewardItem = ItemFactory.CreateGameItem(itemQuantity.ItemID);
 
-                            CurrentPlayer.AddItemToInventory(rewardItem);
                             RaiseMessage($"You receive a {rewardItem.Name}");
+                            CurrentPlayer.AddItemToInventory(rewardItem);
                         }
 
-                        //Mark the Quest as completed
+                        // Mark the Quest as completed
                         questToComplete.IsCompleted = true;
                     }
                 }
@@ -251,17 +247,22 @@ namespace Engine.ViewModels
 
         public void AttackCurrentMonster()
         {
+            if (CurrentMonster == null)
+            {
+                return;
+            }
+
             if (CurrentPlayer.CurrentWeapon == null)
             {
-                RaiseMessage("You must select a weapon to attack.");
+                RaiseMessage("You must select a weapon, to attack.");
                 return;
             }
 
             CurrentPlayer.UseCurrentWeaponOn(CurrentMonster);
 
-            if(CurrentMonster.IsDead)
+            if (CurrentMonster.IsDead)
             {
-                //Get another Monster to fight
+                // Get another monster to fight
                 GetMonsterAtLocation();
             }
             else
@@ -272,7 +273,36 @@ namespace Engine.ViewModels
 
         public void UseCurrentConsumable()
         {
-            CurrentPlayer.UseCurrentConsumable();
+            if (CurrentPlayer.CurrentConsumable != null)
+            {
+                CurrentPlayer.UseCurrentConsumable();
+            }
+        }
+
+        public void CraftItemUsing(Recipe recipe)
+        {
+            if (CurrentPlayer.HasAllTheseItems(recipe.Ingredients))
+            {
+                CurrentPlayer.RemoveItemsFromInventory(recipe.Ingredients);
+
+                foreach (ItemQuantity itemQuantity in recipe.OutputItems)
+                {
+                    for (int i = 0; i < itemQuantity.Quantity; i++)
+                    {
+                        GameItem outputItem = ItemFactory.CreateGameItem(itemQuantity.ItemID);
+                        CurrentPlayer.AddItemToInventory(outputItem);
+                        RaiseMessage($"You craft 1 {outputItem.Name}");
+                    }
+                }
+            }
+            else
+            {
+                RaiseMessage("You do not have the required ingredients:");
+                foreach (ItemQuantity itemQuantity in recipe.Ingredients)
+                {
+                    RaiseMessage($"  {itemQuantity.Quantity} {ItemFactory.ItemName(itemQuantity.ItemID)}");
+                }
+            }
         }
 
         private void OnCurrentPlayerPerformedAction(object sender, string result)
@@ -284,6 +314,7 @@ namespace Engine.ViewModels
         {
             RaiseMessage(result);
         }
+
         private void OnCurrentPlayerKilled(object sender, System.EventArgs eventArgs)
         {
             RaiseMessage("");
